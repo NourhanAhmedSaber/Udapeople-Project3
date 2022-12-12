@@ -203,7 +203,7 @@ jobs:
 
 configure-infrastructure:
     docker:
-      - image: nourhansaber/aws-node
+      - image: amazon/aws-cli
     steps:
       - checkout
       - add_ssh_keys:
