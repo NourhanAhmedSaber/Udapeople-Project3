@@ -203,24 +203,25 @@ jobs:
 
 configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: cimg/base:stable
     steps:
       - checkout
+      - install_ansible
       - add_ssh_keys:
           fingerprints: ["bb:4b:cb:79:2e:cd:8c:3c:db:f0:a0:ba:82:2d:7d:93"]
-      - run:
-          name: "Install Dependencies"
-          command: |
-            apk add ansible gzip openssh-client
-      # - attach_workspace:
-      #     at: ~/
       # - run:
-      #     name: Configure server
+      #     name: "Install Dependencies"
       #     command: |
-      #       cd .circleci/ansible
-      #       aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
-      #       cat inventory.txt
-      #       ansible-playbook -i inventory.txt configure-server.yml
+      #       apk add ansible gzip openssh-client
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
+            cat inventory.txt
+            ansible-playbook -i inventory.txt configure-server.yml
 #       # Here's where you will add some code to rollback on failure      
 
 #   run-migrations:

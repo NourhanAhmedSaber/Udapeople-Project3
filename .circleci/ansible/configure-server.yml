@@ -15,6 +15,7 @@
   pre_tasks:
     - name: "wait 600 seconds for target connection to become reachable/usable."
       wait_for_connection:
+        timeout: 600
 
     - name: "install python for Ansible."
       become: true
@@ -25,7 +26,9 @@
   #environment:
     #- TYPEORM_CONNECTION: "{{ lookup('env', 'TYPEORM_CONNECTION')}}"  
     # Add more env vars here
+
     - setup:
+
   roles:
     - configure-server
     - configure-prometheus-node-exporter
