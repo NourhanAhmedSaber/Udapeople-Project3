@@ -203,15 +203,15 @@ jobs:
 
 configure-infrastructure:
     docker:
-      - image: cimg/base:stable
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - add_ssh_keys:
           fingerprints: ["bb:4b:cb:79:2e:cd:8c:3c:db:f0:a0:ba:82:2d:7d:93"]
-      # - run:
-      #     name: "Install Dependencies"
-      #     command: |
-      #       apk add ansible gzip openssh-client
+      - run:
+          name: "Install Dependencies"
+          command: |
+            apk add ansible gzip openssh-client
       - attach_workspace:
           at: ~/
       - run:
