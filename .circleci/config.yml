@@ -12,15 +12,27 @@ version: 2.1
 #           sudo ./aws/install
 
 #   install_ansible:
-#     description: Install Ansible v2
+#     description: Install Ansible
 #     steps:
 #       - run:
-#         name: Install Ansible v2
+#         name: Install Ansible
 #         command: |
 #           sudo apt update
-#           sudo apt install software-properties-common
+#           sudo apt install software-properties-common -y
 #           sudo add-apt-repository --yes --update ppa:ansible/ansible
-#           sudo apt install ansible
+#           sudo apt install ansible -y
+
+    # install_nodejs:
+    #   description: Install Node.js 13
+    #   steps:
+    #     - run:
+    #         name: Install Node.js 13
+    #         command: |
+    #           curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash
+    #           sudo apt install -y Node.js
+        
+    #           sudo npm install --global n
+    #           sudo n 13.8.0
           
 # destroy-environment:
 #    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -280,21 +292,42 @@ jobs:
             aws s3 cp dist "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive
 #       # Here's where you will add some code to rollback on failure      
                     
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#             # your code here
+  deploy-backend:
+    docker:
+      - image: python:3.9.1-alpine3.12
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["bb:4b:cb:79:2e:cd:8c:3c:db:f0:a0:ba:82:2d:7d:93"]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update --no-cache tar gzip nodejs npm ansible aws-cli
+      - restore_cache:
+          keys: [backend-deps]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Package Backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            tar -czf artifact.tar.gz dist/* package*
+
+            cd ..
+            cp backend/artifact.tar.gz .circleci/ansible/roles/deploy/files
+
+      - run:
+          name: Deploy backend
+          command: |
+            export TYPEORM_MIGRATIONS_DIR=./migrations
+            export TYPEORM_ENTITIES=./modules/domain/**/*.entity{.ts,.js}
+            export TYPEORM_MIGRATIONS=./migrations/*.ts
+
+            cd .circleci/ansible
+            cat inventory.txt
+            ansible-playbook -i inventory.txt deploy-backend.yml
 #       # Here's where you will add some code to rollback on failure  
 
 #   smoke-test:
@@ -379,8 +412,8 @@ workflows:
           requires: [configure-infrastructure]
       - deploy-frontend:
           requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
